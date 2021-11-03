@@ -2,13 +2,13 @@ from random import randint
 
 from common.const import SHIPS, SEA, LIFE_SHIP, KILLED_SHIP, BLOCKED
 from common.const import SIZE, STATUS, COORDINATES, OK, WOUNDED, KILLED
-from common.const import HIT, MISS, HEIGHT, WIDTH
+from common.const import HIT, MISS, INCORRECT, HEIGHT, WIDTH
 
 
 class Field:
 
     def __init__(self):
-        self.field = [[SEA for _ in range(HEIGHT)] for _ in range(WIDTH)]
+        self.field = self.new_field()
         self.ships = []
         for ship in SHIPS:
             self.ships.append({
@@ -16,6 +16,10 @@ class Field:
                 STATUS: OK,
                 COORDINATES: []
             })
+
+    @staticmethod
+    def new_field():
+        return [[SEA for _ in range(HEIGHT)] for _ in range(WIDTH)]
 
     def set_random(self):
         for ship in self.ships:
@@ -41,13 +45,10 @@ class Field:
                             break
             ship[COORDINATES] = points
 
-            # Блокируем клетки
+            # Расставляем корабль и блокируем соседние клетки
             for point in points:
                 self.field[point[0]][point[1]] = LIFE_SHIP
-                for x in range(point[0] - 1, point[0] + 2):
-                    for y in range(point[1] - 1, point[1] + 2):
-                        if 0 <= x <= WIDTH - 1 and 0 <= y <= HEIGHT - 1 and self.field[x][y] == SEA:
-                            self.field[x][y] = BLOCKED
+                self.blocking_cells(point)
 
         # Чистим заблокированные клетки
         for x in range(len(self.field)):
@@ -61,10 +62,36 @@ class Field:
             for ship in self.ships:
                 if [x, y] in ship[COORDINATES]:
                     ship[SIZE] -= 1
-                    ship[STATUS] = WOUNDED if ship[SIZE] != 0 else KILLED
+                    if ship[SIZE] != 0:
+                        ship[STATUS] = WOUNDED
+                    else:
+                        ship[STATUS] = KILLED
+                        for point in ship[COORDINATES]:
+                            self.blocking_cells(point)
+                    print(self.is_end())
                     return HIT, ship[STATUS]
+        elif self.field[x][y] in (KILLED_SHIP, BLOCKED):
+            return INCORRECT
         else:
+            self.field[x][y] = BLOCKED
             return MISS
+
+    def set_ships(self, ships):
+        self.field = self.new_field()
+        self.ships = ships
+        for ship in ships:
+            for cell in ship[COORDINATES]:
+                self.field[cell[0]][cell[1]] = LIFE_SHIP
+
+    def blocking_cells(self, point):
+        for x in range(point[0] - 1, point[0] + 2):
+            for y in range(point[1] - 1, point[1] + 2):
+                if 0 <= x <= WIDTH - 1 and 0 <= y <= HEIGHT - 1 and self.field[x][y] == SEA:
+                    self.field[x][y] = BLOCKED
+
+    def is_end(self):
+        print(sum((ship[SIZE] for ship in self.ships)))
+        return not sum((ship[SIZE] for ship in self.ships))
 
     def __str__(self):
         strfield = '   1 2 3 4 5 6 7 8 9 10\n 1 '
@@ -87,4 +114,3 @@ if __name__ == '__main__':
         shoot = list(map(lambda x: int(x), input('введите координаты\n').strip().split()))
         print(field.shoot(shoot[0] - 1, shoot[1] - 1))
         print(field)
-

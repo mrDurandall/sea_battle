@@ -29,10 +29,11 @@ KILLED = 'killed'
 # Results
 HIT = 'hit'
 MISS = 'miss'
+INCORRECT = 'incorrect'
 
 # game_constants
-SHIPS = (4, 3, 3, 2, 2, 2, 1, 1, 1, 1)
-
+# SHIPS = (4, 3, 3, 2, 2, 2, 1, 1, 1, 1)
+SHIPS = (1,)
 
 
 
